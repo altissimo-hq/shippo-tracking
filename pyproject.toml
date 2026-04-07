@@ -1,0 +1,52 @@
+[tool.poetry]
+name = "shippo-tracking"
+version = "0.1.0"
+description = "Shippo shipping & tracking client with optional Firestore persistence."
+authors = ["Lukas Karlsson <karlsson@altissimo.io>"]
+readme = "README.md"
+license = "GPL-3.0-or-later"
+packages = [{ include = "shippo_tracking", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = ">=2.0"
+requests = ">=2.28"
+firedantic = { version = ">=0.5", optional = true }
+google-cloud-firestore = { version = ">=2.0", optional = true }
+
+[tool.poetry.extras]
+firestore = ["firedantic", "google-cloud-firestore"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0"
+fastapi = ">=0.100"
+httpx = ">=0.24"
+mypy = ">=1.15"
+types-requests = ">=2.28"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests (no infrastructure)",
+    "integration: Integration tests (requires infrastructure)",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+exclude = ["tests/"]
+
+[[tool.mypy.overrides]]
+module = ["firedantic.*"]
+ignore_missing_imports = true
