@@ -1,6 +1,7 @@
 """Unit tests for Shippo models."""
 
 import pytest
+from datetime import UTC, datetime
 
 from shippo_tracking.models import (
     ShippoLocation,
@@ -112,7 +113,7 @@ class TestShippoTrackingDetail:
 
         assert detail.status == "TRANSIT"
         assert detail.substatus.code == "package_arrived"
-        assert detail.eta == "2026-03-21T18:00:00Z"
+        assert detail.eta == datetime(2026, 3, 21, 18, 0, tzinfo=UTC)
         assert len(detail.tracking_events) == 2
         assert detail.updated_at is not None
 

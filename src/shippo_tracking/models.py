@@ -161,8 +161,25 @@ class ShippoTrackingResponse(BaseModel):
     tracking_number: Optional[str] = None
     address_from: Optional[ShippoLocation] = None
     address_to: Optional[ShippoLocation] = None
-    eta: Optional[str] = None
-    original_eta: Optional[str] = None
+    eta: Optional[datetime] = None
+    original_eta: Optional[datetime] = None
+
+    @field_validator("eta", "original_eta", mode="before")
+    @classmethod
+    def _parse_eta(cls, v: datetime | str | None) -> datetime | None:
+        """Parse ETA from ISO string to datetime."""
+        if v is None or v == "":
+            return None
+        if isinstance(v, str):
+            try:
+                v = datetime.fromisoformat(v)
+            except ValueError:
+                logger.warning(f"Could not parse ETA value: {v!r}")
+                return None
+        if v.tzinfo is None:
+            return v.replace(tzinfo=UTC)
+        return v
+
     servicelevel: Optional[dict] = None
     metadata: Optional[str] = None
     tracking_status: Optional[ShippoTrackingStatus] = None
@@ -222,7 +239,23 @@ class ShippoTrackingDetail(_FiredanticBase):  # type: ignore[misc]
     status_details: Optional[str] = None
     status_date: Optional[datetime] = None
 
-    eta: Optional[str] = None
+    eta: Optional[datetime] = None
+
+    @field_validator("eta", mode="before")
+    @classmethod
+    def _parse_eta(cls, v: datetime | str | None) -> datetime | None:
+        """Parse ETA from ISO string or existing Firestore string data to datetime."""
+        if v is None or v == "":
+            return None
+        if isinstance(v, str):
+            try:
+                v = datetime.fromisoformat(v)
+            except ValueError:
+                logger.warning(f"Could not parse ETA value: {v!r}")
+                return None
+        if v.tzinfo is None:
+            return v.replace(tzinfo=UTC)
+        return v
 
     origin_city: Optional[str] = None
     origin_state: Optional[str] = None
