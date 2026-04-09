@@ -7,11 +7,11 @@ Persistence models (``ShippoTrackingDetail``) require the ``[firestore]`` extra.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +108,18 @@ class ShippoTrackingEvent(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    @field_validator("status_date", mode="before")
+    @classmethod
+    def _ensure_utc(cls, v: datetime | str | None) -> datetime | None:
+        """Normalise naive datetimes to UTC."""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            v = datetime.fromisoformat(v)
+        if v.tzinfo is None:
+            return v.replace(tzinfo=UTC)
+        return v
+
 
 class ShippoTrackingStatus(BaseModel):
     """Top-level tracking status from the Shippo API.
@@ -124,6 +136,18 @@ class ShippoTrackingStatus(BaseModel):
     location: Optional[ShippoLocation] = None
 
     model_config = ConfigDict(extra="allow")
+
+    @field_validator("status_date", mode="before")
+    @classmethod
+    def _ensure_utc(cls, v: datetime | str | None) -> datetime | None:
+        """Normalise naive datetimes to UTC."""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            v = datetime.fromisoformat(v)
+        if v.tzinfo is None:
+            return v.replace(tzinfo=UTC)
+        return v
 
 
 class ShippoTrackingResponse(BaseModel):
@@ -212,7 +236,7 @@ class ShippoTrackingDetail(_FiredanticBase):  # type: ignore[misc]
 
     tracking_events: list[ShippoTrackingEvent] = Field(default_factory=list)
 
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(extra="allow")
@@ -246,5 +270,5 @@ class ShippoTrackingDetail(_FiredanticBase):  # type: ignore[misc]
 
         self.eta = response.eta
         self.tracking_events = [ShippoTrackingEvent(**event.model_dump()) for event in response.tracking_history]
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(UTC)
         return self
