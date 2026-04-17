@@ -35,6 +35,23 @@ class ShippoTrackingStatusEnum(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+STATUS_RANK: dict[str, int] = {
+    ShippoTrackingStatusEnum.UNKNOWN.value: 0,
+    ShippoTrackingStatusEnum.PRE_TRANSIT.value: 1,
+    ShippoTrackingStatusEnum.TRANSIT.value: 2,
+    ShippoTrackingStatusEnum.DELIVERED.value: 3,
+    ShippoTrackingStatusEnum.RETURNED.value: 4,
+    ShippoTrackingStatusEnum.FAILURE.value: 5,
+}
+"""Rank ordering of tracking statuses for downgrade detection.
+
+A higher rank means the shipment is further along in its lifecycle.
+Used by the service layer to prevent stale API data (e.g. USPS purging
+old tracking records back to PRE_TRANSIT) from overwriting valid
+DELIVERED records.
+"""
+
+
 class ShippoSubstatusEnum(str, Enum):
     """Substatus values for more granular tracking detail.
 

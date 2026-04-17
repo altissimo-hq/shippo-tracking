@@ -214,3 +214,111 @@ class TestOnDeliveryCallback:
         # Webhook still reports success — the tracking detail was saved
         assert result["status"] == "processed"
         assert "9400111899223456789012" in fake_repo._store
+
+
+class TestStatusDowngradeProtection:
+    """Tests for the 'never downgrade' guard (Issue #3).
+
+    When USPS purges tracking data after ~90-120 days, the Shippo API
+    returns PRE_TRANSIT for packages that were previously DELIVERED.
+    The service must refuse to overwrite a higher-ranked status with
+    a lower-ranked one.
+    """
+
+    def test_save_skips_downgrade(self, fake_client, fake_repo, pre_transit_tracking_response):
+        """Existing DELIVERED record must not be overwritten by stale PRE_TRANSIT."""
+        existing = ShippoTrackingDetail(
+            id="9400111899223456789012",
+            tracking_number="9400111899223456789012",
+            carrier="usps",
+            status="DELIVERED",
+            status_details="Delivered to front door.",
+        )
+        fake_repo._store["9400111899223456789012"] = existing
+        original_updated_at = existing.updated_at
+
+        fake_client.add_response("usps", "9400111899223456789012", pre_transit_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        result = service.save_tracking_detail("usps", "9400111899223456789012")
+
+        assert result.status == "DELIVERED"
+        assert result.status_details == "Delivered to front door."
+        assert result.updated_at == original_updated_at
+
+    def test_save_allows_upgrade(self, fake_client, fake_repo, delivered_tracking_response):
+        """A PRE_TRANSIT record must be upgradable to DELIVERED."""
+        existing = ShippoTrackingDetail(
+            id="9400111899223456789012",
+            tracking_number="9400111899223456789012",
+            carrier="usps",
+            status="PRE_TRANSIT",
+        )
+        fake_repo._store["9400111899223456789012"] = existing
+
+        fake_client.add_response("usps", "9400111899223456789012", delivered_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        result = service.save_tracking_detail("usps", "9400111899223456789012")
+
+        assert result.status == "DELIVERED"
+        assert result.updated_at is not None
+
+    def test_save_creates_new_record(self, fake_client, fake_repo, pre_transit_tracking_response):
+        """New records must be created normally even for PRE_TRANSIT."""
+        fake_client.add_response("usps", "9400111899223456789012", pre_transit_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        result = service.save_tracking_detail("usps", "9400111899223456789012")
+
+        assert result.tracking_number == "9400111899223456789012"
+        assert result.status == "PRE_TRANSIT"
+        assert "9400111899223456789012" in fake_repo._store
+
+    def test_webhook_skips_downgrade(self, fake_client, fake_repo, pre_transit_tracking_response):
+        """Webhook delivering PRE_TRANSIT for a DELIVERED record must be skipped."""
+        existing = ShippoTrackingDetail(
+            id="9400111899223456789012",
+            tracking_number="9400111899223456789012",
+            carrier="usps",
+            status="DELIVERED",
+            status_details="Delivered to front door.",
+        )
+        fake_repo._store["9400111899223456789012"] = existing
+
+        service = ShippoService(client=fake_client, repo=fake_repo)
+        payload = {
+            "event": "track_updated",
+            "data": pre_transit_tracking_response.model_dump(),
+        }
+        result = service.process_webhook(payload)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "status_downgrade"
+        assert fake_repo._store["9400111899223456789012"].status == "DELIVERED"
+
+    def test_webhook_allows_upgrade(self, fake_client, fake_repo, delivered_tracking_response):
+        """Webhook delivering DELIVERED for a TRANSIT record must update and fire on_delivery."""
+        existing = ShippoTrackingDetail(
+            id="9400111899223456789012",
+            tracking_number="9400111899223456789012",
+            carrier="usps",
+            status="TRANSIT",
+        )
+        fake_repo._store["9400111899223456789012"] = existing
+
+        delivered_details = []
+
+        def capture_delivery(detail: ShippoTrackingDetail):
+            delivered_details.append(detail)
+
+        service = ShippoService(client=fake_client, repo=fake_repo, on_delivery=capture_delivery)
+        payload = {
+            "event": "track_updated",
+            "data": delivered_tracking_response.model_dump(),
+        }
+        result = service.process_webhook(payload)
+
+        assert result["status"] == "processed"
+        assert fake_repo._store["9400111899223456789012"].status == "DELIVERED"
+        assert len(delivered_details) == 1

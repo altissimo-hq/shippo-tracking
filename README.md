@@ -50,6 +50,22 @@ def handle_delivery(detail: ShippoTrackingDetail):
 service = ShippoService(on_delivery=handle_delivery)
 ```
 
+## Status Downgrade Protection
+
+The service guards against **status regression**. Tracking statuses have a natural
+lifecycle ordering:
+
+```text
+UNKNOWN → PRE_TRANSIT → TRANSIT → DELIVERED → RETURNED → FAILURE
+```
+
+If a persisted record already has a status further along in this progression (e.g.
+`DELIVERED`), and the Shippo API or a webhook returns a lower status (e.g.
+`PRE_TRANSIT` — common when USPS purges old tracking data), the update is
+**silently skipped** and the existing record is preserved.
+
+This applies to both `save_tracking_detail()` and incoming webhook events.
+
 ## FastAPI Webhook Router
 
 ```python

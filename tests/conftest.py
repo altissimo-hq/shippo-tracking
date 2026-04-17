@@ -126,3 +126,19 @@ def delivered_tracking_response() -> ShippoTrackingResponse:
             ),
         ],
     )
+
+
+@pytest.fixture()
+def pre_transit_tracking_response() -> ShippoTrackingResponse:
+    """A stale Shippo response — USPS purged data returns PRE_TRANSIT with empty history."""
+    return ShippoTrackingResponse(
+        carrier="usps",
+        tracking_number="9400111899223456789012",
+        tracking_status=ShippoTrackingStatus(
+            status="PRE_TRANSIT",
+            substatus={"code": "information_received"},
+            status_details="Shipping label created, USPS awaiting item.",
+            status_date="2026-01-15T10:00:00Z",
+        ),
+        tracking_history=[],
+    )

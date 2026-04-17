@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shippo-tracking"
-version = "0.1.1"
+version = "0.1.2"
 description = "Shippo shipping & tracking client with optional Firestore persistence."
 authors = ["Lukas Karlsson <karlsson@altissimo.io>"]
 readme = "README.md"

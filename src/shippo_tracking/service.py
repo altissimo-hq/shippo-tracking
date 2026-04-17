@@ -16,6 +16,7 @@ from typing import Protocol
 
 from .exceptions import ShippoTrackingDetailNotFoundError, ShippoWebhookProcessingError
 from .models import (
+    STATUS_RANK,
     ShippoTrackingDetail,
     ShippoTrackingResponse,
     ShippoTrackingStatusEnum,
@@ -117,6 +118,22 @@ class ShippoService:
         repo = self._get_repo()
         try:
             detail = repo.get_tracking_detail(tracking_number)
+
+            # Never downgrade — if existing status is further along, skip
+            existing_rank = STATUS_RANK.get(detail.status or "", 0)
+            incoming_status = response.tracking_status.status if response.tracking_status else None
+            incoming_rank = STATUS_RANK.get(incoming_status or "", 0)
+
+            if existing_rank > incoming_rank:
+                logger.info(
+                    "Skipping downgrade for %s/%s: %s -> %s",
+                    carrier,
+                    tracking_number,
+                    detail.status,
+                    incoming_status,
+                )
+                return detail
+
             detail.update_from_response(response)
         except ShippoTrackingDetailNotFoundError:
             detail = ShippoTrackingDetail(
@@ -236,6 +253,22 @@ class ShippoService:
         repo = self._get_repo()
         try:
             detail = repo.get_tracking_detail(tracking_number)
+
+            # Never downgrade from webhook either
+            existing_rank = STATUS_RANK.get(detail.status or "", 0)
+            incoming_status = tracking_response.tracking_status.status if tracking_response.tracking_status else None
+            incoming_rank = STATUS_RANK.get(incoming_status or "", 0)
+
+            if existing_rank > incoming_rank:
+                logger.info(
+                    "Skipping webhook downgrade for %s/%s: %s -> %s",
+                    carrier,
+                    tracking_number,
+                    detail.status,
+                    incoming_status,
+                )
+                return {"status": "skipped", "reason": "status_downgrade"}
+
             detail.update_from_response(tracking_response)
         except ShippoTrackingDetailNotFoundError:
             detail = ShippoTrackingDetail(
