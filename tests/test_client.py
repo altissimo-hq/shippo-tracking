@@ -2,7 +2,7 @@
 
 import pytest
 
-from shippo_tracking.client import ShippoClient
+from altissimo.shippo_tracking.client import ShippoClient
 
 pytestmark = pytest.mark.unit
 

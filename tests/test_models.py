@@ -1,9 +1,10 @@
 """Unit tests for Shippo models."""
 
-import pytest
 from datetime import UTC, datetime
 
-from shippo_tracking.models import (
+import pytest
+
+from altissimo.shippo_tracking.models import (
     ShippoLocation,
     ShippoTrackingDetail,
     ShippoTrackingEvent,

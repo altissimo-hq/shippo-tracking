@@ -2,13 +2,13 @@
 
 import pytest
 
-from shippo_tracking.exceptions import (
+from altissimo.shippo_tracking.exceptions import (
     ShippoClientError,
     ShippoTrackingDetailNotFoundError,
     ShippoWebhookProcessingError,
 )
-from shippo_tracking.models import ShippoTrackingDetail
-from shippo_tracking.service import ShippoService
+from altissimo.shippo_tracking.models import ShippoTrackingDetail
+from altissimo.shippo_tracking.service import ShippoService
 
 pytestmark = pytest.mark.unit
 

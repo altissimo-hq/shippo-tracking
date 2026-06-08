@@ -11,8 +11,7 @@ without coupling this package to any specific project's domain.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from .exceptions import ShippoTrackingDetailNotFoundError, ShippoWebhookProcessingError
 from .models import (
@@ -23,6 +22,9 @@ from .models import (
     ShippoWebhookEvent,
 )
 from .repo import ShippoRepo, ShippoRepoProtocol
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +75,7 @@ class ShippoService:
 
     def _get_client(self) -> ShippoClientProtocol:
         if self._client is None:
-            from .client import ShippoClient  # noqa: PLC0415
+            from .client import ShippoClient
 
             self._client = ShippoClient()
         return self._client

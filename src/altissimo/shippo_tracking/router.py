@@ -12,12 +12,16 @@ that include this router should pass ``prefix="/shippo"`` at
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Request
 
-from .models import ShippoTrackingDetail
 from .service import ShippoService
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from .models import ShippoTrackingDetail
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +36,7 @@ def create_shippo_router(
     This factory function lets consuming projects inject their own
     ``on_delivery`` handler when wiring up their FastAPI app::
 
-        from shippo_tracking.router import create_shippo_router
+        from altissimo.shippo_tracking.router import create_shippo_router
 
         def handle_delivery(detail):
             # project-specific notification logic

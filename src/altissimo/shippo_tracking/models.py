@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-class ShippoTrackingStatusEnum(str, Enum):
+class ShippoTrackingStatusEnum(StrEnum):
     """Tracking status values returned by the Shippo API.
 
     See: https://docs.goshippo.com/docs/tracking/tracking/
@@ -52,7 +51,7 @@ DELIVERED records.
 """
 
 
-class ShippoSubstatusEnum(str, Enum):
+class ShippoSubstatusEnum(StrEnum):
     """Substatus values for more granular tracking detail.
 
     See: https://docs.goshippo.com/docs/tracking/tracking/
@@ -91,10 +90,10 @@ class ShippoSubstatusEnum(str, Enum):
 class ShippoLocation(BaseModel):
     """Location information from a tracking event."""
 
-    city: Optional[str] = None
-    state: Optional[str] = None
-    zip: Optional[str] = None
-    country: Optional[str] = None
+    city: str | None = None
+    state: str | None = None
+    zip: str | None = None
+    country: str | None = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -102,9 +101,9 @@ class ShippoLocation(BaseModel):
 class ShippoSubstatus(BaseModel):
     """Substatus object from the tracking API."""
 
-    code: Optional[str] = None
-    text: Optional[str] = None
-    action_required: Optional[bool] = None
+    code: str | None = None
+    text: str | None = None
+    action_required: bool | None = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -116,12 +115,12 @@ class ShippoTrackingEvent(BaseModel):
     Shippo tracking endpoint.
     """
 
-    object_id: Optional[str] = None
-    status: Optional[str] = None
-    substatus: Optional[ShippoSubstatus] = None
-    status_details: Optional[str] = None
-    status_date: Optional[datetime] = None
-    location: Optional[ShippoLocation] = None
+    object_id: str | None = None
+    status: str | None = None
+    substatus: ShippoSubstatus | None = None
+    status_details: str | None = None
+    status_date: datetime | None = None
+    location: ShippoLocation | None = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -145,12 +144,12 @@ class ShippoTrackingStatus(BaseModel):
     tracking response.
     """
 
-    object_id: Optional[str] = None
-    status: Optional[str] = None
-    substatus: Optional[ShippoSubstatus] = None
-    status_details: Optional[str] = None
-    status_date: Optional[datetime] = None
-    location: Optional[ShippoLocation] = None
+    object_id: str | None = None
+    status: str | None = None
+    substatus: ShippoSubstatus | None = None
+    status_details: str | None = None
+    status_date: datetime | None = None
+    location: ShippoLocation | None = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -174,12 +173,12 @@ class ShippoTrackingResponse(BaseModel):
     history array.
     """
 
-    carrier: Optional[str] = None
-    tracking_number: Optional[str] = None
-    address_from: Optional[ShippoLocation] = None
-    address_to: Optional[ShippoLocation] = None
-    eta: Optional[datetime] = None
-    original_eta: Optional[datetime] = None
+    carrier: str | None = None
+    tracking_number: str | None = None
+    address_from: ShippoLocation | None = None
+    address_to: ShippoLocation | None = None
+    eta: datetime | None = None
+    original_eta: datetime | None = None
 
     @field_validator("eta", "original_eta", mode="before")
     @classmethod
@@ -197,13 +196,13 @@ class ShippoTrackingResponse(BaseModel):
             return v.replace(tzinfo=UTC)
         return v
 
-    servicelevel: Optional[dict] = None
-    metadata: Optional[str] = None
-    tracking_status: Optional[ShippoTrackingStatus] = None
+    servicelevel: dict | None = None
+    metadata: str | None = None
+    tracking_status: ShippoTrackingStatus | None = None
     tracking_history: list[ShippoTrackingEvent] = []
-    object_created: Optional[str] = None
-    object_updated: Optional[str] = None
-    object_id: Optional[str] = None
+    object_created: str | None = None
+    object_updated: str | None = None
+    object_id: str | None = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -251,12 +250,12 @@ class ShippoTrackingDetail(_FiredanticBase):  # type: ignore[misc]
     tracking_number: str
     carrier: str
 
-    status: Optional[str] = None
-    substatus: Optional[ShippoSubstatus] = None
-    status_details: Optional[str] = None
-    status_date: Optional[datetime] = None
+    status: str | None = None
+    substatus: ShippoSubstatus | None = None
+    status_details: str | None = None
+    status_date: datetime | None = None
 
-    eta: Optional[datetime] = None
+    eta: datetime | None = None
 
     @field_validator("eta", mode="before")
     @classmethod
@@ -274,20 +273,20 @@ class ShippoTrackingDetail(_FiredanticBase):  # type: ignore[misc]
             return v.replace(tzinfo=UTC)
         return v
 
-    origin_city: Optional[str] = None
-    origin_state: Optional[str] = None
-    origin_zip: Optional[str] = None
-    origin_country: Optional[str] = None
+    origin_city: str | None = None
+    origin_state: str | None = None
+    origin_zip: str | None = None
+    origin_country: str | None = None
 
-    destination_city: Optional[str] = None
-    destination_state: Optional[str] = None
-    destination_zip: Optional[str] = None
-    destination_country: Optional[str] = None
+    destination_city: str | None = None
+    destination_state: str | None = None
+    destination_zip: str | None = None
+    destination_country: str | None = None
 
     tracking_events: list[ShippoTrackingEvent] = Field(default_factory=list)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(extra="allow")
 

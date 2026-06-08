@@ -36,7 +36,7 @@ class ShippoRepo:
             ShippoTrackingDetailNotFoundError: If the tracking detail does not exist.
         """
         try:
-            from firedantic import ModelNotFoundError  # noqa: PLC0415
+            from firedantic import ModelNotFoundError
 
             try:
                 return ShippoTrackingDetail.get_by_id(tracking_number)
@@ -62,7 +62,7 @@ class ShippoRepo:
             ShippoTrackingDetailNotFoundError: If the tracking detail does not exist.
         """
         try:
-            from firedantic import ModelNotFoundError  # noqa: PLC0415
+            from firedantic import ModelNotFoundError
 
             try:
                 detail = ShippoTrackingDetail.get_by_id(tracking_number)

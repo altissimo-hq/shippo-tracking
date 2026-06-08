@@ -2,8 +2,8 @@
 
 import pytest
 
-from shippo_tracking.exceptions import ShippoClientError, ShippoTrackingDetailNotFoundError
-from shippo_tracking.models import (
+from altissimo.shippo_tracking.exceptions import ShippoClientError, ShippoTrackingDetailNotFoundError
+from altissimo.shippo_tracking.models import (
     ShippoTrackingDetail,
     ShippoTrackingEvent,
     ShippoTrackingResponse,
@@ -57,19 +57,19 @@ class FakeShippoClient:
         return self._responses[key]
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_repo():
     """Provide a fresh FakeShippoRepo for each test."""
     return FakeShippoRepo()
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_client():
     """Provide a fresh FakeShippoClient for each test."""
     return FakeShippoClient()
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_tracking_response() -> ShippoTrackingResponse:
     """A representative Shippo tracking API response."""
     return ShippoTrackingResponse(
@@ -99,7 +99,7 @@ def sample_tracking_response() -> ShippoTrackingResponse:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def delivered_tracking_response() -> ShippoTrackingResponse:
     """A Shippo tracking response with DELIVERED status."""
     return ShippoTrackingResponse(
@@ -128,7 +128,7 @@ def delivered_tracking_response() -> ShippoTrackingResponse:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def pre_transit_tracking_response() -> ShippoTrackingResponse:
     """A stale Shippo response — USPS purged data returns PRE_TRANSIT with empty history."""
     return ShippoTrackingResponse(

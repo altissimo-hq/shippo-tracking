@@ -4,8 +4,8 @@ version = "0.1.2"
 description = "Shippo shipping & tracking client with optional Firestore persistence."
 authors = ["Lukas Karlsson <karlsson@altissimo.io>"]
 readme = "README.md"
-license = "GPL-3.0-or-later"
-packages = [{ include = "shippo_tracking", from = "src" }]
+license = "Apache-2.0"
+packages = [{ include = "altissimo", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -23,6 +23,9 @@ fastapi = ">=0.100"
 httpx = ">=0.24"
 mypy = ">=1.15"
 types-requests = ">=2.28"
+pre-commit = "^4.6.0"
+pytest-cov = "^7.1.0"
+ruff = "^0.15.16"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,12 +41,34 @@ markers = [
 [tool.ruff]
 target-version = "py311"
 line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "S", "SIM", "PT", "TCH", "RUF"
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["altissimo"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S105", "S106", "PT011"]
+
+[tool.coverage.run]
+source = ["altissimo"]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = false
+strict = true
+warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
 plugins = ["pydantic.mypy"]
 exclude = ["tests/"]
 
