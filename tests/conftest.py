@@ -22,8 +22,18 @@ class FakeShippoRepo:
             raise ShippoTrackingDetailNotFoundError(f"Not found: {tracking_number}")
         return self._store[tracking_number]
 
-    def list_tracking_details(self) -> list[ShippoTrackingDetail]:
-        return list(self._store.values())
+    def list_tracking_details(
+        self,
+        *,
+        status: str | None = None,
+        exclude_status: str | None = None,
+    ) -> list[ShippoTrackingDetail]:
+        details = list(self._store.values())
+        if status:
+            return [d for d in details if d.status == status.upper()]
+        if exclude_status:
+            return [d for d in details if d.status != exclude_status.upper()]
+        return details
 
     def save_tracking_detail(self, detail: ShippoTrackingDetail) -> None:
         self._store[detail.tracking_number] = detail
@@ -39,6 +49,7 @@ class FakeShippoClient:
 
     def __init__(self, responses: dict[str, ShippoTrackingResponse] | None = None):
         self._responses = responses or {}
+        self.registered: list[str] = []
 
     def add_response(self, carrier: str, tracking_number: str, response: ShippoTrackingResponse):
         """Register a canned response for a carrier/tracking_number pair."""
@@ -54,6 +65,7 @@ class FakeShippoClient:
         key = f"{carrier}/{tracking_number}"
         if key not in self._responses:
             raise ShippoClientError(f"No response configured for {key}")
+        self.registered.append(key)
         return self._responses[key]
 
 

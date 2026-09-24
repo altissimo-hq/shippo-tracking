@@ -11,12 +11,14 @@ that include this router should pass ``prefix="/shippo"`` at
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Request
 
 from .service import ShippoService
+from .webhook import SIGNATURE_HEADER, verify_signature
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -30,6 +32,9 @@ def create_shippo_router(
     *,
     on_delivery: Callable[[ShippoTrackingDetail], None] | None = None,
     tags: Sequence[str] | None = None,
+    webhook_secret: str | None = None,
+    signature_tolerance_seconds: int | None = None,
+    service: ShippoService | None = None,
 ) -> APIRouter:
     """Create a Shippo webhook router with an optional delivery callback.
 
@@ -43,15 +48,32 @@ def create_shippo_router(
             ...
 
         app.include_router(create_shippo_router(on_delivery=handle_delivery))
+
+    If ``webhook_secret`` is set, every request must carry a valid
+    ``Shippo-Auth-Signature`` HMAC header or it is rejected with 401.
+    ``signature_tolerance_seconds`` additionally rejects signatures whose
+    timestamp is too old.  Pass ``service`` to supply a preconfigured
+    :class:`ShippoService` (``on_delivery`` is then ignored).
     """
     router = APIRouter(tags=list(tags) if tags else ["Shippo"])
-    service = ShippoService(on_delivery=on_delivery)
+    if service is None:
+        service = ShippoService(on_delivery=on_delivery)
 
     @router.post("/webhook")
     async def shippo_webhook(request: Request) -> dict:
         """Handle incoming Shippo webhook events."""
+        body = await request.body()
+        if webhook_secret is not None and not verify_signature(
+            webhook_secret,
+            body,
+            request.headers.get(SIGNATURE_HEADER),
+            tolerance_seconds=signature_tolerance_seconds,
+        ):
+            logger.warning("Rejected Shippo webhook with missing or invalid signature")
+            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
         try:
-            payload = await request.json()
+            payload = json.loads(body)
             logger.info("Received Shippo webhook: %s", payload.get("event", "unknown"))
 
             result = service.process_webhook(payload)

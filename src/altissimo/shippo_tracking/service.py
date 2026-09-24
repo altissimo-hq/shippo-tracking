@@ -105,15 +105,36 @@ class ShippoService:
         """
         return self._get_repo().get_tracking_detail(tracking_number)
 
-    def list_tracking_details(self) -> list[ShippoTrackingDetail]:
-        """List all persisted tracking details."""
-        return self._get_repo().list_tracking_details()
+    def list_tracking_details(
+        self,
+        *,
+        status: str | None = None,
+        exclude_status: str | None = None,
+    ) -> list[ShippoTrackingDetail]:
+        """List persisted tracking details, optionally filtered by status.
 
-    def save_tracking_detail(self, carrier: str, tracking_number: str) -> ShippoTrackingDetail:
+        Status values are matched case-insensitively.  With no arguments,
+        every record is returned.
+        """
+        return self._get_repo().list_tracking_details(status=status, exclude_status=exclude_status)
+
+    def save_tracking_detail(
+        self,
+        carrier: str,
+        tracking_number: str,
+        *,
+        register_if_new: bool = False,
+    ) -> ShippoTrackingDetail:
         """Fetch tracking from the Shippo API and persist to Firestore.
 
         If a record already exists for this tracking number it is updated
         in place; otherwise a new document is created.
+
+        The GET tracking endpoint does **not** subscribe a shipment to
+        ``track_updated`` webhooks.  Pass ``register_if_new=True`` to also
+        call :meth:`register_tracking` the first time a tracking number is
+        seen.  Registration happens before the record is persisted, so if it
+        fails nothing is saved and the next call will retry it.
         """
         response = self.get_tracking_status(carrier, tracking_number)
 
@@ -144,6 +165,16 @@ class ShippoService:
                 carrier=carrier,
             )
             detail.update_from_response(response)
+
+            if register_if_new:
+                self.register_tracking(carrier, tracking_number)
+            else:
+                logger.warning(
+                    "Saving new tracking number %s/%s without registering it for webhooks; "
+                    "pass register_if_new=True or call register_tracking()",
+                    carrier,
+                    tracking_number,
+                )
 
         repo.save_tracking_detail(detail)
         logger.info("Saved tracking detail for %s/%s [%s]", carrier, tracking_number, detail.status)

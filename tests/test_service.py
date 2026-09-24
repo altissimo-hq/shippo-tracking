@@ -147,6 +147,74 @@ class TestListTrackingDetails:
 
         assert len(result) == 2
 
+    def test_filters_by_status_case_insensitive(self, fake_client, fake_repo):
+        fake_repo._store["A"] = ShippoTrackingDetail(id="A", tracking_number="A", carrier="usps", status="DELIVERED")
+        fake_repo._store["B"] = ShippoTrackingDetail(id="B", tracking_number="B", carrier="usps", status="TRANSIT")
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        result = service.list_tracking_details(status="delivered")
+
+        assert [d.tracking_number for d in result] == ["A"]
+
+    def test_excludes_status(self, fake_client, fake_repo):
+        fake_repo._store["A"] = ShippoTrackingDetail(id="A", tracking_number="A", carrier="usps", status="DELIVERED")
+        fake_repo._store["B"] = ShippoTrackingDetail(id="B", tracking_number="B", carrier="usps", status="TRANSIT")
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        result = service.list_tracking_details(exclude_status="delivered")
+
+        assert [d.tracking_number for d in result] == ["B"]
+
+
+class TestRegisterIfNew:
+    """Tests for save_tracking_detail(register_if_new=...)."""
+
+    def test_registers_new_tracking_number(self, fake_client, fake_repo, sample_tracking_response):
+        fake_client.add_response("usps", "9400111899223456789012", sample_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        service.save_tracking_detail("usps", "9400111899223456789012", register_if_new=True)
+
+        assert fake_client.registered == ["usps/9400111899223456789012"]
+        assert "9400111899223456789012" in fake_repo._store
+
+    def test_does_not_register_existing(self, fake_client, fake_repo, sample_tracking_response):
+        fake_repo._store["9400111899223456789012"] = ShippoTrackingDetail(
+            id="9400111899223456789012",
+            tracking_number="9400111899223456789012",
+            carrier="usps",
+            status="PRE_TRANSIT",
+        )
+        fake_client.add_response("usps", "9400111899223456789012", sample_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        service.save_tracking_detail("usps", "9400111899223456789012", register_if_new=True)
+
+        assert fake_client.registered == []
+
+    def test_default_does_not_register_but_warns(self, fake_client, fake_repo, sample_tracking_response, caplog):
+        fake_client.add_response("usps", "9400111899223456789012", sample_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        service.save_tracking_detail("usps", "9400111899223456789012")
+
+        assert fake_client.registered == []
+        assert "without registering it for webhooks" in caplog.text
+
+    def test_registration_failure_does_not_persist(self, fake_client, fake_repo, sample_tracking_response):
+        fake_client.add_response("usps", "9400111899223456789012", sample_tracking_response)
+
+        def fail(carrier, tracking_number):
+            raise ShippoClientError("boom")
+
+        fake_client.register_tracking = fail
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        with pytest.raises(ShippoClientError):
+            service.save_tracking_detail("usps", "9400111899223456789012", register_if_new=True)
+
+        assert fake_repo._store == {}
+
 
 class TestOnDeliveryCallback:
     """Tests for the on_delivery callback hook."""
