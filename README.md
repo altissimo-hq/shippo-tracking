@@ -89,9 +89,25 @@ app.include_router(create_shippo_router())
 # With delivery callback
 app.include_router(create_shippo_router(on_delivery=handle_delivery))
 
+# With a self-generated URL token (401 on missing/wrong ?token=)
+app.include_router(create_shippo_router(webhook_token=os.environ["SHIPPO_WEBHOOK_TOKEN"]))
+
 # With HMAC signature verification (401 on missing/invalid signature)
 app.include_router(create_shippo_router(webhook_secret=os.environ["SHIPPO_WEBHOOK_SECRET"]))
 ```
+
+### Webhook authentication
+
+[Shippo offers three ways](https://docs.goshippo.com/tracking/webhook-security)
+to secure webhooks; this router supports the two
+that are checked per request, and they can be combined.
+
+- **Self-generated token** (`webhook_token`): in the Shippo dashboard
+  (Settings → API → Webhooks), append `?token=<your token>` to the webhook URL.
+  Shippo echoes it back on every POST and the router compares it in constant time.
+- **HMAC** (`webhook_secret`): requires Shippo's solutions team to provision a
+  secret (up to ~10 business days).
+- **IP allowlist**: enforce at your load balancer/firewall; not handled here.
 
 When `webhook_secret` is set, requests must carry a
 `Shippo-Auth-Signature: t=<timestamp>,v1=<hex HMAC-SHA256(secret, "<timestamp>.<raw body>")>`

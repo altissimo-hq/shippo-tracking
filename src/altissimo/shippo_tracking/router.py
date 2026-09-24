@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter, HTTPException, Request
 
 from .service import ShippoService
-from .webhook import SIGNATURE_HEADER, verify_signature
+from .webhook import SIGNATURE_HEADER, TOKEN_PARAM, verify_signature, verify_token
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -32,6 +32,7 @@ def create_shippo_router(
     *,
     on_delivery: Callable[[ShippoTrackingDetail], None] | None = None,
     tags: Sequence[str] | None = None,
+    webhook_token: str | None = None,
     webhook_secret: str | None = None,
     signature_tolerance_seconds: int | None = None,
     service: ShippoService | None = None,
@@ -49,6 +50,11 @@ def create_shippo_router(
 
         app.include_router(create_shippo_router(on_delivery=handle_delivery))
 
+    If ``webhook_token`` is set, every request must carry a matching
+    ``?token=`` query parameter (Shippo's "self-generated token" option,
+    configured by appending it to the webhook URL in the Shippo dashboard)
+    or it is rejected with 401.
+
     If ``webhook_secret`` is set, every request must carry a valid
     ``Shippo-Auth-Signature`` HMAC header or it is rejected with 401.
     ``signature_tolerance_seconds`` additionally rejects signatures whose
@@ -62,6 +68,10 @@ def create_shippo_router(
     @router.post("/webhook")
     async def shippo_webhook(request: Request) -> dict[str, Any]:
         """Handle incoming Shippo webhook events."""
+        if webhook_token is not None and not verify_token(webhook_token, request.query_params.get(TOKEN_PARAM)):
+            logger.warning("Rejected Shippo webhook with missing or invalid token")
+            raise HTTPException(status_code=401, detail="Invalid webhook token")
+
         body = await request.body()
         if webhook_secret is not None and not verify_signature(
             webhook_secret,

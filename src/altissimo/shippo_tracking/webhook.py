@@ -1,9 +1,14 @@
-"""Shippo webhook HMAC signature helpers.
+"""Shippo webhook authentication helpers.
 
-Shippo signs webhook requests with a ``Shippo-Auth-Signature`` header of the
-form ``t=<timestamp>,v1=<signature>``, where::
+Shippo supports two request-level options (see
+https://docs.goshippo.com/tracking/webhook-security):
 
-    signature = hex(HMAC-SHA256(secret, f"{timestamp}.{raw_body}"))
+* **Self-generated token** — a secret appended to the webhook URL as
+  ``?token=<token>``, echoed back on every POST.
+* **HMAC** — a ``Shippo-Auth-Signature`` header of the form
+  ``t=<timestamp>,v1=<signature>``, where::
+
+      signature = hex(HMAC-SHA256(secret, f"{timestamp}.{raw_body}"))
 """
 
 from __future__ import annotations
@@ -13,6 +18,14 @@ import hmac
 import time
 
 SIGNATURE_HEADER = "Shippo-Auth-Signature"
+TOKEN_PARAM = "token"  # noqa: S105 - query parameter name, not a secret
+
+
+def verify_token(expected: str, received: str | None) -> bool:
+    """Return ``True`` if ``received`` matches ``expected`` (constant-time)."""
+    if not received:
+        return False
+    return hmac.compare_digest(expected.encode(), received.encode())
 
 
 def _sign(secret: str, timestamp: str, body: bytes) -> str:
