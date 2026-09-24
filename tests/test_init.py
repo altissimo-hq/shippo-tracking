@@ -1,4 +1,9 @@
-"""Unit tests for the package's lazy exports."""
+"""Regression tests for the package's public import surface.
+
+The README documents ``from altissimo.shippo_tracking import ...`` for these
+names (see #13, where documented imports were wrong).  These tests make sure
+those documented imports keep resolving to the real classes.
+"""
 
 import pytest
 
@@ -9,7 +14,7 @@ pytestmark = pytest.mark.unit
 
 
 class TestLazyExports:
-    """Tests for altissimo.shippo_tracking.__getattr__."""
+    """Names exported lazily via altissimo.shippo_tracking.__getattr__."""
 
     def test_client(self):
         assert pkg.ShippoClient is client.ShippoClient
