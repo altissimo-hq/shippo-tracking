@@ -16,7 +16,12 @@ class ShippoRepoProtocol(Protocol):
 
     def get_tracking_detail(self, tracking_number: str) -> ShippoTrackingDetail: ...
 
-    def list_tracking_details(self) -> list[ShippoTrackingDetail]: ...
+    def list_tracking_details(
+        self,
+        *,
+        status: str | None = None,
+        exclude_status: str | None = None,
+    ) -> list[ShippoTrackingDetail]: ...
 
     def save_tracking_detail(self, detail: ShippoTrackingDetail) -> None: ...
 
@@ -47,9 +52,25 @@ class ShippoRepo:
                 "firedantic is required for ShippoRepo — install with: pip install shippo-tracking[firestore]"
             ) from e
 
-    def list_tracking_details(self) -> list[ShippoTrackingDetail]:
-        """List all tracking details."""
-        return ShippoTrackingDetail.find()
+    def list_tracking_details(
+        self,
+        *,
+        status: str | None = None,
+        exclude_status: str | None = None,
+    ) -> list[ShippoTrackingDetail]:
+        """List tracking details, optionally filtered by status.
+
+        Status values are matched case-insensitively.  If both ``status``
+        and ``exclude_status`` are given, ``status`` wins.
+        """
+        details: list[ShippoTrackingDetail]
+        if status:
+            details = ShippoTrackingDetail.find({"status": status.upper()})
+        elif exclude_status:
+            details = ShippoTrackingDetail.find({"status": {"!=": exclude_status.upper()}})
+        else:
+            details = ShippoTrackingDetail.find()
+        return details
 
     def save_tracking_detail(self, detail: ShippoTrackingDetail) -> None:
         """Save or update a tracking detail."""
