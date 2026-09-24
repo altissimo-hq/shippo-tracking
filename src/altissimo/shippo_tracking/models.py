@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -196,7 +197,7 @@ class ShippoTrackingResponse(BaseModel):
             return v.replace(tzinfo=UTC)
         return v
 
-    servicelevel: dict | None = None
+    servicelevel: dict[str, Any] | None = None
     metadata: str | None = None
     tracking_status: ShippoTrackingStatus | None = None
     tracking_history: list[ShippoTrackingEvent] = []
@@ -215,7 +216,7 @@ class ShippoWebhookEvent(BaseModel):
     """
 
     event: str
-    data: dict
+    data: dict[str, Any]
 
     model_config = ConfigDict(extra="allow")
 
@@ -291,7 +292,7 @@ class ShippoTrackingDetail(_FiredanticBase):  # type: ignore[misc]
     model_config = ConfigDict(extra="allow")
 
     @classmethod
-    def _validate_id(cls, values: dict) -> dict:
+    def _validate_id(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Ensure the document ID is the tracking number."""
         if not values.get("id"):
             values["id"] = values.get("tracking_number", "")

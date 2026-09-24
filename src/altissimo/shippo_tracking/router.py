@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -60,7 +60,7 @@ def create_shippo_router(
         service = ShippoService(on_delivery=on_delivery)
 
     @router.post("/webhook")
-    async def shippo_webhook(request: Request) -> dict:
+    async def shippo_webhook(request: Request) -> dict[str, Any]:
         """Handle incoming Shippo webhook events."""
         body = await request.body()
         if webhook_secret is not None and not verify_signature(

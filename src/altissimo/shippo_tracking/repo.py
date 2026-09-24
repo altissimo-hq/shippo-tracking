@@ -44,13 +44,14 @@ class ShippoRepo:
             from firedantic import ModelNotFoundError
 
             try:
-                return ShippoTrackingDetail.get_by_id(tracking_number)
+                detail: ShippoTrackingDetail = ShippoTrackingDetail.get_by_id(tracking_number)
             except ModelNotFoundError as e:
                 raise ShippoTrackingDetailNotFoundError(f"Tracking detail not found: {tracking_number}") from e
         except ImportError as e:
             raise RuntimeError(
                 "firedantic is required for ShippoRepo — install with: pip install shippo-tracking[firestore]"
             ) from e
+        return detail
 
     def list_tracking_details(
         self,
