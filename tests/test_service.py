@@ -322,3 +322,33 @@ class TestStatusDowngradeProtection:
         assert result["status"] == "processed"
         assert fake_repo._store["9400111899223456789012"].status == "DELIVERED"
         assert len(delivered_details) == 1
+
+
+class TestBulkOperations:
+    """Tests for process_tracking_details and register_all_tracking."""
+
+    @staticmethod
+    def _seed(fake_repo):
+        for number, status in [("A", "DELIVERED"), ("B", "TRANSIT"), ("C", "PRE_TRANSIT")]:
+            fake_repo._store[number] = ShippoTrackingDetail(
+                id=number, tracking_number=number, carrier="usps", status=status
+            )
+
+    def test_process_refreshes_non_delivered(self, fake_client, fake_repo, sample_tracking_response):
+        self._seed(fake_repo)
+        fake_client.add_response("usps", "B", sample_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        result = service.process_tracking_details()
+
+        # A skipped (delivered), B refreshed, C errors (no canned response)
+        assert result == {"status": "ok", "processed": 1, "skipped": 1, "errors": 1}
+
+    def test_register_all_skips_delivered(self, fake_client, fake_repo, sample_tracking_response):
+        self._seed(fake_repo)
+        fake_client.add_response("usps", "B", sample_tracking_response)
+        service = ShippoService(client=fake_client, repo=fake_repo)
+
+        result = service.register_all_tracking()
+
+        assert result == {"status": "ok", "registered": 1, "skipped": 1, "errors": 1}
