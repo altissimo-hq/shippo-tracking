@@ -11,7 +11,7 @@ without coupling this package to any specific project's domain.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from .exceptions import ShippoTrackingDetailNotFoundError, ShippoWebhookProcessingError
 from .models import (
@@ -180,7 +180,7 @@ class ShippoService:
         logger.info("Saved tracking detail for %s/%s [%s]", carrier, tracking_number, detail.status)
         return detail
 
-    def delete_tracking_detail(self, tracking_number: str) -> dict:
+    def delete_tracking_detail(self, tracking_number: str) -> dict[str, Any]:
         """Delete a persisted tracking detail.
 
         Raises:
@@ -190,7 +190,7 @@ class ShippoService:
         logger.info("Deleted tracking detail: %s", tracking_number)
         return {"id": tracking_number}
 
-    def process_tracking_details(self) -> dict:
+    def process_tracking_details(self) -> dict[str, Any]:
         """Re-fetch and persist all non-delivered tracking details.
 
         Iterates every persisted ``ShippoTrackingDetail`` record and skips any
@@ -227,7 +227,7 @@ class ShippoService:
         logger.info("Registering tracking for webhooks: %s/%s", carrier, tracking_number)
         return self._get_client().register_tracking(carrier, tracking_number)
 
-    def register_all_tracking(self) -> dict:
+    def register_all_tracking(self) -> dict[str, Any]:
         """Register all non-delivered tracking numbers for webhook notifications.
 
         Returns a summary dict with ``registered``, ``skipped``, and
@@ -254,7 +254,7 @@ class ShippoService:
     # Webhook processing
     # -----------------------------------------------------------------
 
-    def process_webhook(self, payload: dict) -> dict:
+    def process_webhook(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Process an incoming Shippo webhook event.
 
         For ``track_updated`` events this persists tracking data and
@@ -273,7 +273,7 @@ class ShippoService:
         logger.info("Ignoring unhandled Shippo event type: %s", event.event)
         return {"status": "ignored", "event": event.event}
 
-    def _handle_track_updated(self, event: ShippoWebhookEvent) -> dict:
+    def _handle_track_updated(self, event: ShippoWebhookEvent) -> dict[str, Any]:
         """Handle a ``track_updated`` webhook event."""
         tracking_response = ShippoTrackingResponse(**event.data)
 
