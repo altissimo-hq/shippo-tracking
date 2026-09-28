@@ -34,6 +34,7 @@ firestore = [
 [project.urls]
 Homepage = "https://github.com/altissimo-hq/shippo-tracking"
 Repository = "https://github.com/altissimo-hq/shippo-tracking"
+Issues = "https://github.com/altissimo-hq/shippo-tracking/issues"
 Changelog = "https://github.com/altissimo-hq/shippo-tracking/blob/main/CHANGELOG.md"
 
 [tool.poetry]
