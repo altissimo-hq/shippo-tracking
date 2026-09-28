@@ -32,8 +32,29 @@ jobs:
       - run: poetry sync --with dev
       - run: poetry run pytest --cov=altissimo --cov-report=term-missing --cov-fail-under=80
 
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # The Firestore emulator needs Java; firebase-tools needs Node
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install -g firebase-tools
+      - run: pipx install poetry==2.0.1
+      - run: poetry sync --with dev --all-extras
+      # emulators:exec sets FIRESTORE_EMULATOR_HOST for the command
+      - run: firebase emulators:exec --only firestore --project demo-shippo-tracking "poetry run pytest -m integration -v"
+
   build:
-    needs: [lint, test]
+    needs: [lint, test, integration]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

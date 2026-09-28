@@ -12,6 +12,10 @@ pip install git+https://github.com/altissimo-hq/shippo-tracking.git
 pip install "shippo-tracking[firestore] @ git+https://github.com/altissimo-hq/shippo-tracking.git"
 ```
 
+The `firestore` extra installs [`altissimo-firedantic`](https://pypi.org/project/altissimo-firedantic/),
+Altissimo's maintained fork of firedantic. It is still imported as `firedantic`, so don't
+install the upstream `firedantic` package alongside it.
+
 ## Quick Start
 
 ```python
@@ -123,3 +127,12 @@ poetry run pytest -v
 ```
 
 All unit tests use in-memory fakes — no Firestore or network access required.
+
+Integration tests in `tests/test_repo_integration.py` exercise `ShippoRepo`
+against the Firestore emulator and are skipped unless `FIRESTORE_EMULATOR_HOST`
+is set. To run them (requires the Firebase CLI and Java):
+
+```bash
+poetry install --with dev --all-extras
+firebase emulators:exec --only firestore --project demo-shippo-tracking "poetry run pytest -m integration -v"
+```

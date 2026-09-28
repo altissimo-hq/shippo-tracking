@@ -104,6 +104,16 @@ class TestShippoTrackingDetail:
         assert detail.tracking_events == []
         assert detail.created_at is not None
 
+    def test_id_defaults_to_tracking_number(self):
+        # Regression: _validate_id was never registered as a validator, so id
+        # stayed None and firedantic saved each record under a random document ID.
+        detail = ShippoTrackingDetail(tracking_number="TRACK123", carrier="usps")
+        assert detail.id == "TRACK123"
+
+    def test_explicit_id_is_kept(self):
+        detail = ShippoTrackingDetail(id="custom", tracking_number="TRACK123", carrier="usps")
+        assert detail.id == "custom"
+
     def test_update_from_response(self, sample_tracking_response):
         detail = ShippoTrackingDetail(
             id="9400111899223456789012",
