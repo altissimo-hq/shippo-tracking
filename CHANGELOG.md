@@ -33,8 +33,8 @@ name is unchanged (`altissimo.shippo_tracking`).
 ### Added
 
 - Integration tests for `ShippoRepo` against the Firestore emulator, run in CI.
-- A publish workflow that builds and uploads tagged releases (`v*`) to PyPI
-  through Trusted Publishing.
+- A publish workflow that uploads tagged releases (`v*`) to PyPI, and the
+  current branch to TestPyPI when run by hand, through Trusted Publishing.
 
 [Unreleased]: https://github.com/altissimo-hq/shippo-tracking/compare/v0.2.1...HEAD
 [0.2.1]: https://github.com/altissimo-hq/shippo-tracking/releases/tag/v0.2.1
