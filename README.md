@@ -4,12 +4,15 @@ Shippo shipping & tracking client with optional Firestore persistence.
 
 ## Installation
 
+Published on PyPI as `altissimo-shippo-tracking`; the import name is
+`altissimo.shippo_tracking`.
+
 ```bash
 # Basic (API client + models only)
-pip install git+https://github.com/altissimo-hq/shippo-tracking.git
+pip install altissimo-shippo-tracking
 
 # With Firestore persistence
-pip install "shippo-tracking[firestore] @ git+https://github.com/altissimo-hq/shippo-tracking.git"
+pip install "altissimo-shippo-tracking[firestore]"
 ```
 
 The `firestore` extra installs [`altissimo-firedantic`](https://pypi.org/project/altissimo-firedantic/),

@@ -1,21 +1,44 @@
-[tool.poetry]
-name = "shippo-tracking"
+[project]
+name = "altissimo-shippo-tracking"
 version = "0.2.1"
 description = "Shippo shipping & tracking client with optional Firestore persistence."
-authors = ["Lukas Karlsson <karlsson@altissimo.io>"]
-readme = "README.md"
+authors = [{ name = "Lukas Karlsson", email = "karlsson@altissimo.io" }]
 license = "Apache-2.0"
+license-files = ["LICENSE"]
+readme = "README.md"
+requires-python = ">=3.11,<4.0"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.0",
+    "requests>=2.28",
+]
+
+[project.optional-dependencies]
+# pip install altissimo-shippo-tracking[firestore]
+firestore = [
+    # The Altissimo fork of firedantic, published as altissimo-firedantic
+    # (import name is still `firedantic`).
+    "altissimo-firedantic>=0.22.4,<0.23",
+    "google-cloud-firestore>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/altissimo-hq/shippo-tracking"
+Repository = "https://github.com/altissimo-hq/shippo-tracking"
+Changelog = "https://github.com/altissimo-hq/shippo-tracking/blob/main/CHANGELOG.md"
+
+[tool.poetry]
+# Only Poetry-specific settings live here; package metadata is in [project].
 packages = [{ include = "altissimo", from = "src" }]
-
-[tool.poetry.dependencies]
-python = "^3.11"
-pydantic = ">=2.0"
-requests = ">=2.28"
-altissimo-firedantic = { version = ">=0.22.4,<0.23", optional = true }
-google-cloud-firestore = { version = ">=2.0", optional = true }
-
-[tool.poetry.extras]
-firestore = ["altissimo-firedantic", "google-cloud-firestore"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.0"
@@ -28,7 +51,7 @@ pytest-cov = "^7.1.0"
 ruff = "^0.15.16"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
