@@ -1919,5 +1919,5 @@ firestore = ["altissimo-firedantic", "google-cloud-firestore"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.11"
-content-hash = "706f910ef30ff4ff92a8ac96d7b9a814f7f50f2247633461468d4791c650b05a"
+python-versions = ">=3.11,<4.0"
+content-hash = "6806e5c6147c4b8bae3b6da422ac510963de8c316789a7ae46b7ecc744665e11"
