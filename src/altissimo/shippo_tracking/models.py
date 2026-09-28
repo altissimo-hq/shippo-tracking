@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 logger = logging.getLogger(__name__)
 
@@ -291,11 +291,12 @@ class ShippoTrackingDetail(_FiredanticBase):  # type: ignore[misc]
 
     model_config = ConfigDict(extra="allow")
 
+    @model_validator(mode="before")
     @classmethod
-    def _validate_id(cls, values: dict[str, Any]) -> dict[str, Any]:
-        """Ensure the document ID is the tracking number."""
-        if not values.get("id"):
-            values["id"] = values.get("tracking_number", "")
+    def _validate_id(cls, values: Any) -> Any:
+        """Use the tracking number as the document ID."""
+        if isinstance(values, dict) and not values.get("id"):
+            values = {**values, "id": values.get("tracking_number")}
         return values
 
     def update_from_response(self, response: ShippoTrackingResponse) -> ShippoTrackingDetail:
